@@ -1,0 +1,1786 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aethyra Loot Generator</title>
+  <meta name="description" content="Loot + shop generator for Aethyra (single-file GitHub Pages ready)." />
+  <style>
+:root{
+  --bg0:#0b0f14; --bg1:#111a24; --bg2:#162231;
+  --text:#eaf2ff; --muted:#9ab0c7; --line:rgba(255,255,255,.10);
+  --shadow: 0 18px 45px rgba(0,0,0,.45);
+  --radius: 18px;
+
+  --c-common:#7bd88f;
+  --c-uncommon:#6aa8ff;
+  --c-rare:#b489ff;
+  --c-veryrare:#ff7ac0;
+  --c-legendary:#ffcf5c;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  color:var(--text);
+  background:
+    radial-gradient(1200px 800px at 20% -10%, rgba(106,168,255,.22), transparent 55%),
+    radial-gradient(900px 700px at 90% 0%, rgba(255,122,192,.18), transparent 50%),
+    radial-gradient(900px 700px at 60% 110%, rgba(123,216,143,.14), transparent 55%),
+    linear-gradient(180deg, var(--bg0), var(--bg1));
+}
+.topbar{
+  position:sticky; top:0; z-index:50;
+  display:flex; align-items:center; justify-content:space-between; gap:18px;
+  padding:18px 22px;
+  border-bottom:1px solid var(--line);
+  background: rgba(11,15,20,.72);
+  backdrop-filter: blur(14px);
+}
+.brand{display:flex; align-items:center; gap:14px;}
+.sigil{
+  width:46px; height:46px; border-radius:14px;
+  display:grid; place-items:center;
+  background: linear-gradient(135deg, rgba(255,207,92,.26), rgba(180,137,255,.22));
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow: var(--shadow);
+  font-size:22px;
+}
+.brandText h1{margin:0; font-size:22px; line-height:1.1;}
+.brandText p{margin:2px 0 0; color:var(--muted); font-size:13px;}
+.topActions{display:flex; gap:10px; flex-wrap:wrap;}
+.btn{
+  padding:12px 14px; border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color:var(--text);
+  font-weight:800; font-size:14px;
+  cursor:pointer;
+  transition: transform .06s ease, background .15s ease, border-color .15s ease;
+}
+.btn:hover{background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.22);}
+.btn:active{transform: translateY(1px);}
+.btnPrimary{
+  background: linear-gradient(135deg, rgba(106,168,255,.32), rgba(123,216,143,.24));
+  border-color: rgba(255,255,255,.22);
+}
+.layout{
+  display:grid;
+  grid-template-columns: 480px 1fr;
+  gap:18px;
+  padding:18px;
+  max-width: 1560px;
+  margin: 0 auto;
+}
+.panel{
+  background: rgba(15,21,32,.70);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.controls{padding:18px;}
+.output{padding:18px; min-height: calc(100vh - 190px);}
+h2{margin:0 0 14px 0; font-size:18px; letter-spacing:.2px;}
+.grid2{display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom: 12px;}
+.field label{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  font-weight:900; font-size:13px;
+}
+.field input[type="range"]{width:100%;}
+.field select, .field input[type="text"], .field input[type="file"]{
+  width:100%;
+  padding:12px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.20);
+  color: var(--text);
+  outline: none;
+}
+.field input[readonly]{opacity:.9}
+.field select:focus, .field input[type="text"]:focus{
+  border-color: rgba(106,168,255,.55);
+  box-shadow: 0 0 0 4px rgba(106,168,255,.12);
+}
+.hint{margin-top:6px; color: var(--muted); font-size:12px; line-height:1.35;}
+.pill{
+  padding:4px 10px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.07);
+  font-size:12px; font-weight:900;
+}
+.divider{height:1px; margin: 14px 0; background: rgba(255,255,255,.12);}
+.accordion{
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  border-radius: 16px;
+  margin: 12px 0;
+  overflow:hidden;
+}
+.accordion summary{
+  list-style:none; cursor:pointer;
+  padding: 14px 14px;
+  display:flex; justify-content:space-between; align-items:center;
+  font-weight:900;
+}
+.accordion summary::-webkit-details-marker{display:none;}
+.accordionBody{padding: 12px 14px 14px;}
+.tag{
+  font-size:11px; font-weight:900;
+  padding:4px 9px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.18);
+  color: var(--muted);
+}
+.checkGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+.chk{
+  display:flex; gap:10px; align-items:center;
+  padding:10px 12px;
+  border-radius: 14px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+  font-weight:800;
+  color: var(--text);
+  font-size:13px;
+}
+.chk input{transform: scale(1.15);}
+.footerNote{
+  margin-top: 14px;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+  color: var(--muted);
+  font-size:12px;
+  line-height:1.4;
+}
+.outputHead{
+  display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom: 10px;
+}
+.legend{display:flex; gap:10px; flex-wrap:wrap; color: var(--muted); font-size:12px; font-weight:800;}
+.dot{
+  width:10px; height:10px; border-radius:99px;
+  display:inline-block; margin-right:6px;
+  border:1px solid rgba(255,255,255,.16);
+}
+.dot.common{background: var(--c-common);}
+.dot.uncommon{background: var(--c-uncommon);}
+.dot.rare{background: var(--c-rare);}
+.dot.veryrare{background: var(--c-veryrare);}
+.dot.legendary{background: var(--c-legendary);}
+.results{display:flex; flex-direction:column; gap:12px;}
+.card{
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.20);
+  overflow:hidden;
+}
+.cardHead{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding: 14px 14px 12px;
+}
+.cardTitle{display:flex; flex-direction:column; gap:3px;}
+.cardTitle strong{font-size:15px;}
+.cardTitle span{color: var(--muted); font-size:12px;}
+.badge{
+  font-size:12px; font-weight:900;
+  padding:6px 10px; border-radius:999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  white-space:nowrap;
+}
+.rbar{height:8px; width:100%;}
+.rbar.common{background: var(--c-common);}
+.rbar.uncommon{background: var(--c-uncommon);}
+.rbar.rare{background: var(--c-rare);}
+.rbar.veryrare{background: var(--c-veryrare);}
+.rbar.legendary{background: var(--c-legendary);}
+.cardBody{padding: 14px; display:grid; grid-template-columns: 1fr; gap:10px;}
+.line{display:flex; flex-wrap:wrap; gap:8px; align-items:baseline;}
+.kv{color: var(--muted); font-size:12px;}
+.desc{color: var(--text); opacity:.92; font-size:13px; line-height:1.45;}
+kbd{
+  padding:2px 6px; border-radius:8px;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.25);
+  font-weight:900; font-size:12px;
+}
+.bottomHint{margin-top: 12px; color: var(--muted); font-size:12px;}
+.siteFoot{
+  max-width: 1560px;
+  margin: 0 auto 24px;
+  padding: 10px 18px 0;
+  color: var(--muted);
+  font-size: 12px;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.muted{opacity:.85;}
+@media (max-width: 1100px){
+  .layout{grid-template-columns: 1fr; }
+  .output{min-height: auto;}
+  .checkGrid{grid-template-columns: 1fr;}
+}
+
+  
+.resultsSplit{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.splitSection{
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.10);
+  border-radius: 18px;
+  padding: 12px;
+}
+.splitHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+.splitHead h3{
+  margin:0;
+  font-size:14px;
+  letter-spacing:.3px;
+  color: var(--text);
+}
+.splitActions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+@media (max-width: 520px){
+  .splitHead{flex-direction:column; align-items:flex-start;}
+}
+
+</style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="sigil" aria-hidden="true">⟠</div>
+      <div class="brandText">
+        <h1>Aethyra Loot Generator</h1>
+        <p>More options • More variety • Shops • Funny Magic</p>
+      </div>
+    </div>
+
+    <div class="topActions">
+      <button id="btnClearAll" class="btn btnGhost">Clear All</button>
+      <button id="btnCopy" class="btn btnGhost">Copy</button>
+      <button id="btnExport" class="btn btnGhost">Export JSON</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel controls">
+      <h2>Loot Controls</h2>
+
+      <div class="grid2">
+        <div class="field">
+          <label for="level">Party Level <span id="levelOut" class="pill">1</span></label>
+          <input id="level" type="range" min="1" max="20" value="1" />
+          <div class="hint">Scales rarity chance, gold, and quantities.</div>
+        </div>
+
+        <div class="field">
+          <label for="partySize">Party Size</label>
+          <select id="partySize">
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+          </select>
+          <div class="hint">Affects total loot volume.</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label for="quality">Loot Quality</label>
+          <select id="quality">
+            <option value="lean">Lean (tight)</option>
+            <option value="standard" selected>Standard</option>
+            <option value="generous">Generous</option>
+            <option value="mythic">Mythic (spicy)</option>
+          </select>
+          <div class="hint">Changes number of rolls & top-end rarity.</div>
+        </div>
+
+        <div class="field">
+          <label for="lootMode">Loot Mode</label>
+          <select id="lootMode">
+            <option value="mixed" selected>Mixed (default)</option>
+            <option value="treasure">Treasure-focused</option>
+            <option value="gear">Gear-focused</option>
+            <option value="magic">Magic-focused</option>
+            <option value="consumables">Consumables-focused</option>
+          </select>
+          <div class="hint">Steers the categories you get.</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label for="source">Found As</label>
+          <select id="source">
+            <option value="cache">Hidden Cache</option>
+            <option value="chest" selected>Chest</option>
+            <option value="enemies">Enemies</option>
+            <option value="boss">Boss</option>
+            <option value="lair">Lair Hoard</option>
+            <option value="treasury">Treasury</option>
+            <option value="environment">Environment</option>
+          </select>
+          <div class="hint">Alters what kinds of items show up.</div>
+        </div>
+
+        <div class="field">
+          <label for="env">Environment</label>
+          <select id="env"></select>
+          <div class="hint">Adds themed drops and flavor.</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <h2>What can appear?</h2>
+
+      <div class="grid2">
+        <div class="field">
+          <label for="rarityCap">Max Rarity</label>
+          <select id="rarityCap">
+            <option value="uncommon">Uncommon</option>
+            <option value="rare" selected>Rare</option>
+            <option value="veryrare">Very Rare</option>
+            <option value="legendary">Legendary</option>
+          </select>
+          <div class="hint">Hard cap on loot rarity.</div>
+        </div>
+
+        <div class="field">
+          <label for="cursedChance">Cursed Chance</label>
+          <select id="cursedChance">
+            <option value="0" selected>Off</option>
+            <option value="5">Low (5%)</option>
+            <option value="12">Medium (12%)</option>
+            <option value="20">High (20%)</option>
+          </select>
+          <div class="hint">Adds mild curses (table-safe).</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label for="attuneFilter">Attunement</label>
+          <select id="attuneFilter">
+            <option value="any" selected>Any</option>
+            <option value="yes">Only attunement items</option>
+            <option value="no">No attunement items</option>
+          </select>
+          <div class="hint">Filter magic by attunement.</div>
+        </div>
+
+        <div class="field">
+          <label for="tagsFilter">Theme Tags (optional)</label>
+          <input id="tagsFilter" type="text" placeholder="ex: gate, swamp, druid, warlock" />
+          <div class="hint">Comma-separated. Matches item tags.</div>
+        </div>
+      </div>
+
+      <details class="accordion" open>
+        <summary><span>Item Category Toggles</span><span class="tag">more variety</span></summary>
+        <div class="accordionBody">
+          <div class="checkGrid">
+            <label class="chk"><input id="incCoins" type="checkbox" checked> Coins & valuables</label>
+            <label class="chk"><input id="incGems" type="checkbox" checked> Gems</label>
+            <label class="chk"><input id="incTrade" type="checkbox" checked> Trade goods</label>
+            <label class="chk"><input id="incMundane" type="checkbox" checked> Mundane gear</label>
+            <label class="chk"><input id="incWeapons" type="checkbox" checked> Weapons</label>
+            <label class="chk"><input id="incArmor" type="checkbox" checked> Armor & shields</label>
+            <label class="chk"><input id="incConsumables" type="checkbox" checked> Consumables</label>
+            <label class="chk"><input id="incMagic" type="checkbox" checked> Magic items</label>
+            <label class="chk"><input id="incWondrous" type="checkbox" checked> Wondrous</label>
+            <label class="chk"><input id="incRings" type="checkbox" checked> Rings</label>
+            <label class="chk"><input id="incWands" type="checkbox" checked> Wands</label>
+            <label class="chk"><input id="incRods" type="checkbox" checked> Rods</label>
+            <label class="chk"><input id="incStaves" type="checkbox" checked> Staves</label>
+          </div>
+
+          <div class="grid2" style="margin-top:12px;">
+            <div class="field">
+              <label for="scrollLevel">Scroll Level Range</label>
+              <select id="scrollLevel">
+                <option value="0-0">Off</option>
+                <option value="0-1" selected>0–1</option>
+                <option value="0-2">0–2</option>
+                <option value="1-3">1–3</option>
+                <option value="1-5">1–5</option>
+                <option value="3-7">3–7</option>
+              </select>
+              <div class="hint">Controls what spell scrolls can roll.</div>
+            </div>
+            <div class="field">
+              <label for="potionTier">Potion Strength</label>
+              <select id="potionTier">
+                <option value="any" selected>Any</option>
+                <option value="common">Mostly Common</option>
+                <option value="uncommon">Up to Uncommon</option>
+                <option value="rare">Up to Rare</option>
+                <option value="veryrare">Up to Very Rare</option>
+              </select>
+              <div class="hint">Nudges potion results.</div>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="accordion">
+        <summary><span>Funny Custom Magic Items</span><span class="tag">optional</span></summary>
+        <div class="accordionBody">
+          <div class="grid2">
+            <div class="field">
+              <label for="funnyRate">Chance to Add a Funny Item</label>
+              <select id="funnyRate">
+                <option value="0">Never</option>
+                <option value="10">Low (10%)</option>
+                <option value="25" selected>Medium (25%)</option>
+                <option value="45">High (45%)</option>
+                <option value="70">Chaos (70%)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="comedy">Comedy Intensity</label>
+              <select id="comedy">
+                <option value="1">Dry</option>
+                <option value="2" selected>Table-safe</option>
+                <option value="3">Goofy</option>
+                <option value="4">Absurd</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label for="funnyTheme">Theme</label>
+              <select id="funnyTheme">
+                <option value="any" selected>Any</option>
+                <option value="aethyra">Aethyra (Gates & relics)</option>
+                <option value="tavern">Tavern nonsense</option>
+                <option value="pets">Dog-friendly</option>
+                <option value="travel">Travel problems</option>
+                <option value="crafting">Crafting/blacksmith</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="funnyPower">Power Level</label>
+              <select id="funnyPower">
+                <option value="minor" selected>Minor (utility/prank)</option>
+                <option value="moderate">Moderate (situational)</option>
+                <option value="rare">Rare (strong but limited)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="hint">Funny items are useful or flavorful—never campaign-breaking.</div>
+        </div>
+      </details>
+
+      <details class="accordion">
+        <summary><span>Import Your Own Items (for “DnDBeyond-like” variety)</span><span class="tag">add packs</span></summary>
+        <div class="accordionBody">
+          <div class="hint" style="margin-bottom:10px;">
+            You can drop a JSON pack of items (export from anywhere / your own list). This avoids proprietary databases while letting you have huge variety.
+          </div>
+          <div class="grid2">
+            <div class="field">
+              <label for="itemPack">Load Item Pack (.json)</label>
+              <input id="itemPack" type="file" accept=".json,application/json" />
+              <div class="hint">Items merge into the generator instantly.</div>
+            </div>
+            <div class="field">
+              <label for="packStatus">Pack Status</label>
+              <input id="packStatus" type="text" value="No pack loaded" readonly />
+              <div class="hint">Tip: Keep item tags like: ring, wand, staff, gate, swamp, etc.</div>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="accordion">
+        <summary><span>Shop Mode (Aethyra)</span><span class="tag">optional</span></summary>
+        <div class="accordionBody">
+          <div class="grid2">
+            <div class="field">
+              <label for="shopType">Shop Type</label>
+              <select id="shopType">
+                <option value="none" selected>Off</option>
+                <option value="general">General Store</option>
+                <option value="wandering">Wandering Trader</option>
+                <option value="blacksmith">Blacksmith</option>
+                <option value="armorer">Armorer</option>
+                <option value="woodworker">Woodworker / Fletcher</option>
+                <option value="healer">Healer / Apothecary</option>
+                <option value="arcanist">Arcanist Curios</option>
+                <option value="magic_armorer">Magic Armorer (rare)</option>
+                <option value="legendary_forge">Legendary Forge (very rare)</option>
+              </select>
+              <div class="hint">Generates a shop inventory + fair pricing.</div>
+            </div>
+            <div class="field">
+              <label for="shopWealth">Local Wealth</label>
+              <select id="shopWealth">
+                <option value="wretched">Wretched</option>
+                <option value="squalid">Squalid</option>
+                <option value="poor">Poor</option>
+                <option value="modest" selected>Modest</option>
+                <option value="comfortable">Comfortable</option>
+                <option value="wealthy">Wealthy</option>
+                <option value="aristocratic">Aristocratic</option>
+              </select>
+              <div class="hint">Affects stock quality & markups.</div>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label for="shopSize">Shop Size</label>
+              <select id="shopSize">
+                <option value="tiny">Tiny</option>
+                <option value="small" selected>Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+              </select>
+              <div class="hint">Changes number of inventory lines.</div>
+            </div>
+            <div class="field">
+              <label for="haggle">Haggling</label>
+              <select id="haggle">
+                <option value="off" selected>Off</option>
+                <option value="light">Light (±10%)</option>
+                <option value="normal">Normal (±20%)</option>
+                <option value="hard">Hard (±30%)</option>
+              </select>
+              <div class="hint">Adds a suggested bargaining window.</div>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <div class="footerNote">
+        <strong>GitHub Pages ready:</strong> Upload these files to your repo root. Pages should deploy from <code>/(root)</code>.
+        <br/>Note: GitHub Pages expects <code>index.html</code>. This zip includes BOTH <code>index.html</code> and <code>Index.html</code>.
+      </div>
+    </section>
+
+    <section class="panel output">
+      <div class="outputHead">
+        <h2>Results</h2>
+        <div class="legend">
+          <span class="dot common"></span> Common
+          <span class="dot uncommon"></span> Uncommon
+          <span class="dot rare"></span> Rare
+          <span class="dot veryrare"></span> Very Rare
+          <span class="dot legendary"></span> Legendary
+        </div>
+      </div>
+
+      
+      <div class="resultsSplit">
+        <div class="splitSection">
+          <div class="splitHead">
+            <h3>Loot Results</h3>
+            <div class="splitActions">
+              <button id="btnGenerateLoot" class="btn btnPrimary">Generate Loot</button>
+              <button id="btnRerollOne" class="btn btnGhost">Reroll 1</button>
+              <button id="btnClearLoot" class="btn btnGhost">Clear Loot</button>
+            </div>
+          </div>
+          <div id="lootResults" class="results"></div>
+        </div>
+
+        <div class="splitSection">
+          <div class="splitHead">
+            <h3>Shop Inventory</h3>
+            <div class="splitActions">
+              <button id="btnGenerateShop" class="btn btnPrimary">Generate Shop</button>
+              <button id="btnClearShop" class="btn btnGhost">Clear Shop</button>
+            </div>
+          </div>
+          <div id="shopResults" class="results"></div>
+        </div>
+
+        <div class="splitSection">
+          <div class="splitHead">
+            <h3>Funny Magic Item</h3>
+            <div class="splitActions">
+              <button id="btnGenerateFunny" class="btn btnPrimary">Generate Funny</button>
+              <button id="btnClearFunny" class="btn btnGhost">Clear Funny</button>
+            </div>
+          </div>
+          <div id="funnyResults" class="results"></div>
+        </div>
+      </div>
+
+
+      <div class="bottomHint">
+        Tip: Use <kbd>Reroll 1</kbd> to replace a single random result.
+      </div>
+    </section>
+  </main>
+
+  <footer class="siteFoot">
+    <div>Built for Aethyra • Packs supported • No external dependencies</div>
+    <div class="muted">Avoids proprietary databases — import your own item pack for maximum variety.</div>
+  </footer>
+
+  <script>
+// Data packs: SRD-style + original Aethyra flavor.
+// For huge variety like "an app compendium", use the Import Pack feature (see UI).
+
+const ENVIRONMENTS = [
+  "Arctic / Tundra","Badlands","Beach / Coast","Canyon","Caravan Road","Catacombs","Cave","City Streets","Cliffside",
+  "Coral Reef","Crater","Crypt","Desert","Dockyards","Dungeon","Farmland","Fey Grove","Forest","Glacier",
+  "Graveyard","Haunted Moor","Hills","Jungle","Lava Fields","Marsh / Swamp","Mountains","Mushroom Grove",
+  "Ocean","Old Battlefield","Plains","Rainforest","Ruins","Sewer","Shipwreck","Sky-Isles","Temple",
+  "Underbridge","Underdark","Volcanic Crater","Wasteland","Wetlands","Witchwood","Frozen Lake",
+  "Gate Hotspot (Aethyra)","Collapsed Gate Site","Ashkarael Ruins","Brightwater Trade Road","Elaris Spire Foothills",
+  "Forgotten Watchtower","Abandoned Mine","Hidden Shrine","Sunken Library","Bandit Camp","Mage’s Study",
+  "Ancient Vault","Rift-Scar Hollow"
+];
+
+const COIN_BUNDLES = [
+  {name:"Copper coins", denom:"cp"},
+  {name:"Silver coins", denom:"sp"},
+  {name:"Gold coins", denom:"gp"},
+  {name:"Electrum coins", denom:"ep"},
+  {name:"Platinum coins", denom:"pp"}
+];
+
+const GEMS = [
+  {name:"agate", gp:[10,25]},{name:"amber", gp:[25,50]},{name:"moonstone", gp:[50,100]},
+  {name:"garnet", gp:[50,150]},{name:"jade", gp:[75,200]},{name:"pearl", gp:[100,300]},
+  {name:"opal", gp:[200,750]},{name:"sapphire", gp:[400,1200]},{name:"diamond", gp:[500,2000]}
+];
+
+const TRADE_GOODS = [
+  {name:"bundle of rare herbs", base:5, tags:["healer","swamp","forest"]},
+  {name:"spool of silk", base:10, tags:["city","trade"]},
+  {name:"tin of preserved rations", base:2, tags:["travel"]},
+  {name:"pouch of incense", base:7, tags:["temple","arcanist"]},
+  {name:"bar of refined steel", base:20, tags:["blacksmith","armorer"]},
+  {name:"small electrum ingot", base:25, tags:["trade","aethyra"]},
+  {name:"magistone shard (raw)", base:35, tags:["gate","aethyra"]},
+  {name:"magisteel rivets (set of 20)", base:15, tags:["blacksmith","gate"]},
+  {name:"crated glass vials (12)", base:8, tags:["healer","arcanist"]},
+  {name:"marble tile (10 sq ft)", base:18, tags:["building"]},
+  {name:"timber plank bundle", base:12, tags:["woodworker","building"]},
+  {name:"bundle of slate shingles", base:14, tags:["building"]},
+  {name:"leather scraps (workable)", base:6, tags:["crafting"]},
+  {name:"bottle of decent spirits", base:4, tags:["tavern","trade"]},
+  {name:"bundle of parchment + inks", base:9, tags:["arcanist","city"]},
+];
+
+// Mundane gear
+const MUNDANE = [
+  {name:"50 ft hempen rope", type:"gear", tags:["travel","dungeon"]},
+  {name:"silk rope (50 ft)", type:"gear", tags:["travel","city"]},
+  {name:"10 iron spikes", type:"gear", tags:["dungeon","ruins"]},
+  {name:"pitons (10) + hammer", type:"gear", tags:["mountains","cave"]},
+  {name:"torch bundle (6)", type:"gear", tags:["dungeon"]},
+  {name:"lantern + oil flask", type:"gear", tags:["dungeon","city"]},
+  {name:"waterskin + purification tablets (3)", type:"gear", tags:["swamp","desert","travel"]},
+  {name:"crowbar", type:"tool", tags:["ruins","dungeon"]},
+  {name:"grappling hook", type:"gear", tags:["travel","city"]},
+  {name:"thieves' tools (basic)", type:"tool", tags:["city","dungeon"]},
+  {name:"healer's kit (10 uses)", type:"gear", tags:["healer"]},
+  {name:"mess kit", type:"gear", tags:["travel"]},
+  {name:"bedroll + blanket", type:"gear", tags:["travel"]},
+  {name:"tinderbox", type:"gear", tags:["travel"]},
+  {name:"mirror, small steel", type:"gear", tags:["dungeon","city"]},
+  {name:"magnifying lens", type:"gear", tags:["arcanist","city"]},
+  {name:"lock (good)", type:"gear", tags:["city","treasury"]},
+  {name:"manacles", type:"gear", tags:["city"]},
+  {name:"hunter's trap", type:"gear", tags:["forest"]},
+  {name:"antitoxin kit (field)", type:"gear", tags:["swamp","healer"]},
+  {name:"climber's harness", type:"gear", tags:["mountains","cave"]},
+  {name:"map case with blank parchment", type:"gear", tags:["travel"]},
+  {name:"sealed oilskin satchel", type:"gear", tags:["swamp","coast"]},
+  {name:"blacksmith tongs (small)", type:"tool", tags:["blacksmith"]},
+  {name:"whetstone + oil", type:"tool", tags:["blacksmith","armorer"]},
+  {name:"bundle of fletcher shafts (20)", type:"ammo", tags:["woodworker"]},
+  {name:"bundle of arrowheads (20)", type:"ammo", tags:["woodworker","blacksmith"]},
+  {name:"Gate-salt sachet (warding dust)", type:"gear", tags:["aethyra","gate"]},
+  {name:"bottle of rustproofing oil", type:"gear", tags:["blacksmith","armorer"]},
+  {name:"folding camp brazier", type:"gear", tags:["travel"]},
+  {name:"weatherproof cloak", type:"gear", tags:["travel","swamp","coast"]},
+  {name:"chalk (10)", type:"gear", tags:["dungeon"]},
+  {name:"signal whistle", type:"gear", tags:["travel","city"]},
+  {name:"small shovel", type:"tool", tags:["travel","ruins"]},
+  {name:"alchemist’s supplies (basic)", type:"tool", tags:["arcanist","healer"]},
+];
+
+// Weapons (mundane + aethyra flavors)
+const WEAPONS = [
+  {name:"dagger", price:[2,4], tags:["rogue","city"]},
+  {name:"shortsword", price:[8,12], tags:["rogue","fighter"]},
+  {name:"longsword", price:[12,18], tags:["fighter"]},
+  {name:"greatsword", price:[40,60], tags:["fighter"]},
+  {name:"mace", price:[4,8], tags:["cleric","temple"]},
+  {name:"warhammer", price:[12,20], tags:["dwarf","fighter"]},
+  {name:"spear", price:[1,3], tags:["travel","guard"]},
+  {name:"handaxe", price:[4,7], tags:["barbarian","travel"]},
+  {name:"battleaxe", price:[8,14], tags:["fighter"]},
+  {name:"halberd", price:[18,28], tags:["guard","fighter"]},
+  {name:"light crossbow", price:[22,35], tags:["ranged","woodworker"]},
+  {name:"heavy crossbow", price:[45,70], tags:["ranged","woodworker"]},
+  {name:"shortbow", price:[18,30], tags:["ranged","woodworker"]},
+  {name:"longbow", price:[45,70], tags:["ranged","woodworker"]},
+  {name:"javelins (5)", price:[4,7], tags:["travel","guard"]},
+  {name:"Gate-tempered knife", price:[10,20], tags:["gate","aethyra"]},
+  {name:"magisteel machete", price:[18,35], tags:["gate","forest"]},
+];
+
+// Armor & shields (mundane)
+const ARMOR = [
+  {name:"padded armor", price:[4,8], tags:["light"]},
+  {name:"leather armor", price:[8,14], tags:["light"]},
+  {name:"studded leather armor", price:[35,60], tags:["light","city"]},
+  {name:"hide armor", price:[8,14], tags:["medium","druid"]},
+  {name:"chain shirt", price:[40,70], tags:["medium"]},
+  {name:"scale mail", price:[45,80], tags:["medium","guard"]},
+  {name:"breastplate", price:[320,420], tags:["medium","wealthy"]},
+  {name:"half plate", price:[650,850], tags:["medium","wealthy"]},
+  {name:"ring mail", price:[25,40], tags:["heavy"]},
+  {name:"chain mail", price:[60,90], tags:["heavy","guard"]},
+  {name:"splint armor", price:[180,260], tags:["heavy","guard"]},
+  {name:"plate armor", price:[1350,1750], tags:["heavy","aristocratic"]},
+  {name:"shield", price:[8,12], tags:["shield"]},
+  {name:"tower-style shield (Aethyra)", price:[18,30], tags:["shield","guard"]},
+];
+
+// Consumables including scrolls/potions
+const CONSUMABLES = [
+  {name:"Potion of Healing", rarity:"common", price:[25,60], tags:["healer","potion"], desc:"Heals 2d4+2 HP."},
+  {name:"Antitoxin", rarity:"common", price:[40,70], tags:["healer"], desc:"Advantage vs poison for 1 hour."},
+  {name:"Potion of Climbing", rarity:"common", price:[60,100], tags:["travel","potion"], desc:"Climb speed for 1 hour."},
+  {name:"Potion of Water Breathing", rarity:"uncommon", price:[140,260], tags:["coast","potion"], desc:"Breathe underwater for 1 hour."},
+  {name:"Potion of Greater Healing", rarity:"uncommon", price:[80,180], tags:["healer","potion"], desc:"Heals 4d4+4 HP."},
+  {name:"Potion of Heroism", rarity:"rare", price:[450,800], tags:["potion"], desc:"10 temp HP and bless for 1 hour."},
+  {name:"Potion of Superior Healing", rarity:"rare", price:[250,650], tags:["healer","potion"], desc:"Heals 8d4+8 HP."},
+  {name:"Potion of Supreme Healing", rarity:"veryrare", price:[900,2000], tags:["healer","potion"], desc:"Heals 10d4+20 HP."},
+  {name:"Gateward Charm", rarity:"uncommon", price:[150,300], tags:["gate","aethyra"], desc:"Once: advantage vs one Gate-like effect or teleport mishap."},
+  {name:"Veinlit Flare Vial", rarity:"uncommon", price:[90,180], tags:["dungeon","ruins"], desc:"Once: bright flare reveals invisible traces in 20 ft for 1 round."},
+];
+
+// Scroll templates (generated)
+const SCROLL_PRICE = {0:[15,35],1:[35,90],2:[120,300],3:[350,800],4:[900,1800],5:[1800,3500],6:[3000,6000],7:[5000,9000]};
+
+// Magic items: generic + Aethyra originals with tags & attunement flag
+const MAGIC = [
+  // Uncommon staples
+  {name:"Bag of Holding", rarity:"uncommon", type:"wondrous", attune:false, price:[250,600], tags:["wondrous"], desc:"Extra-dimensional storage (capacity 500 lb / 64 cu ft)."},
+  {name:"Cloak of Elvenkind", rarity:"uncommon", type:"wondrous", attune:true, price:[450,900], tags:["wondrous","cloak"], desc:"Advantage on Stealth; perception to see you has disadvantage."},
+  {name:"Boots of Striding and Springing", rarity:"uncommon", type:"wondrous", attune:true, price:[500,1100], tags:["wondrous","boots"], desc:"Speed boosts and better jumps."},
+  {name:"Goggles of Night", rarity:"uncommon", type:"wondrous", attune:false, price:[300,700], tags:["wondrous"], desc:"Grants darkvision 60 ft."},
+  {name:"Gauntlets of Ogre Power", rarity:"uncommon", type:"wondrous", attune:true, price:[800,1500], tags:["wondrous"], desc:"Sets STR to 19 while worn."},
+  {name:"Weapon +1", rarity:"uncommon", type:"weapon", attune:false, price:[250,800], tags:["weapon"], desc:"+1 to attack and damage rolls."},
+  {name:"Shield +1", rarity:"uncommon", type:"armor", attune:false, price:[250,800], tags:["armor","shield"], desc:"+1 AC while wielded."},
+
+  // Rare
+  {name:"Ring of Protection", rarity:"rare", type:"ring", attune:true, price:[800,2200], tags:["ring"], desc:"+1 AC and saving throws."},
+  {name:"Cloak of Protection", rarity:"rare", type:"wondrous", attune:true, price:[700,2000], tags:["wondrous","cloak"], desc:"+1 AC and saving throws."},
+  {name:"Weapon +2", rarity:"rare", type:"weapon", attune:false, price:[1200,3500], tags:["weapon"], desc:"+2 to attack and damage rolls."},
+  {name:"Amulet of Health", rarity:"rare", type:"wondrous", attune:true, price:[4200,8000], tags:["wondrous"], desc:"Sets CON to 19 while worn."},
+  {name:"Rod of the Pact Keeper +1", rarity:"rare", type:"rod", attune:true, price:[1800,3500], tags:["rod","warlock"], desc:"+1 to spell attack & save DC; regain 1 warlock slot 1/day."},
+  {name:"Wand of Web", rarity:"rare", type:"wand", attune:true, price:[3200,6500], tags:["wand"], desc:"Casts web (charges)."},
+  {name:"Staff of the Adder", rarity:"rare", type:"staff", attune:true, price:[1600,3200], tags:["staff"], desc:"Can become a poisonous snake."},
+
+  // Very Rare
+  {name:"Armor +2", rarity:"veryrare", type:"armor", attune:false, price:[3000,9000], tags:["armor"], desc:"+2 armor (type varies)."},
+  {name:"Ring of Spell Storing", rarity:"veryrare", type:"ring", attune:true, price:[3500,9500], tags:["ring"], desc:"Stores spells for later casting."},
+  {name:"Rod of the Pact Keeper +2", rarity:"veryrare", type:"rod", attune:true, price:[8000,15000], tags:["rod","warlock"], desc:"+2 to spell attack & save DC; regain 1 warlock slot 1/day."},
+  {name:"Wand of Fireballs", rarity:"veryrare", type:"wand", attune:true, price:[4500,10000], tags:["wand"], desc:"Casts fireball (charges)."},
+  {name:"Staff of Healing", rarity:"veryrare", type:"staff", attune:true, price:[4500,10000], tags:["staff","healer"], desc:"Healing spells (charges)."},
+
+  // Legendary (kept rare)
+  {name:"Weapon +3", rarity:"legendary", type:"weapon", attune:false, price:[15000,35000], tags:["weapon"], desc:"+3 to attack and damage rolls."},
+  {name:"Ring of Invisibility", rarity:"legendary", type:"ring", attune:true, price:[20000,45000], tags:["ring"], desc:"Turn invisible (limited uses)."},
+  {name:"Legendary Forge Token (Aethyra)", rarity:"legendary", type:"wondrous", attune:false, price:[25000,50000], tags:["wondrous","aethyra"], desc:"Redeem with a Legendary Forge to commission a bespoke legendary item (DM-approved)."},
+
+  // Aethyra originals
+  {name:"Veinlit Lantern", rarity:"rare", type:"wondrous", attune:false, price:[1200,2200], tags:["wondrous","gate","aethyra"], desc:"Reveals lingering Gate traces within 30 ft."},
+  {name:"Relic-Seal Circlet", rarity:"veryrare", type:"wondrous", attune:true, price:[7000,14000], tags:["wondrous","aethyra","gate"], desc:"Advantage vs charm/fear; detect anomalies at dawn."},
+  {name:"Magisteel Buckler", rarity:"rare", type:"armor", attune:false, price:[1500,3000], tags:["armor","shield","aethyra"], desc:"+1 shield; 1/short rest reduce force/necrotic by 1d8."},
+  {name:"Magistone Edgeblade", rarity:"veryrare", type:"weapon", attune:false, price:[6500,12000], tags:["weapon","gate","aethyra"], desc:"+2 weapon; 1/long rest add 2d6 force and push 10 ft on a hit."},
+];
+
+const RARITY_PRICE = {
+  common:[25,75],
+  uncommon:[100,500],
+  rare:[500,2500],
+  veryrare:[2500,10000],
+  legendary:[15000,50000]
+};
+
+// Funny items
+const FUNNY_BASE = [
+  {name:"Ring of Loud Sneaking", theme:["any","tavern","travel"], power:"minor", tags:["ring"], desc:"Advantage on Stealth checks… but every successful stealthy step makes a tiny applause sound audible within 10 feet."},
+  {name:"Mug of Unending Foam", theme:["tavern","any"], power:"minor", tags:["wondrous"], desc:"Fills itself with harmless foam. Great for pranks, cleaning, and dramatic tavern speeches."},
+  {name:"Gate-Sneeze Pebble", theme:["aethyra","any"], power:"moderate", tags:["gate"], desc:"Once per day, toss to create a 10-ft burst of glittery 'Gate dust.' Everyone sneezes (Con save) and invisibility is revealed until end of turn."},
+  {name:"Belt of Dramatic Wind", theme:["any","travel"], power:"minor", tags:["wondrous"], desc:"Whenever you enter a room, a perfectly timed gust billows your cloak. Advantage on Performance, disadvantage on attempts to be unnoticed."},
+  {name:"Hound’s Hero Collar", theme:["pets","aethyra"], power:"moderate", tags:["wondrous","pets"], desc:"A dog wearing it can deliver one Help action per round from up to 15 ft away by barking heroically (no damage, just vibes)."},
+  {name:"Anvil-in-a-Can", theme:["crafting","any"], power:"rare", tags:["wondrous","crafting"], desc:"Once per long rest, unfolds into a full anvil + tools for 10 minutes. It’s loud. Like, spiritually loud."},
+  {name:"Scroll of Minor Inconvenience", theme:["any"], power:"minor", tags:["scroll"], desc:"Create one small annoyance (shoelace knot, squeaky door, overly polite rat). Funny, not harmful."},
+  {name:"The Polite Dagger", theme:["any"], power:"moderate", tags:["weapon"], desc:"A dagger that compliments opponents. Once per combat, you can impose disadvantage on one Intimidation check… because the dagger is too nice."}
+];
+
+  </script>
+  <script>
+(function(){
+  const $ = (id)=>document.getElementById(id);
+
+  // Elements
+  const els = {
+    level: $("level"), levelOut: $("levelOut"),
+    partySize: $("partySize"),
+    quality: $("quality"),
+    lootMode: $("lootMode"),
+    source: $("source"),
+    env: $("env"),
+    rarityCap: $("rarityCap"),
+    cursedChance: $("cursedChance"),
+    attuneFilter: $("attuneFilter"),
+    tagsFilter: $("tagsFilter"),
+
+    incCoins: $("incCoins"),
+    incGems: $("incGems"),
+    incTrade: $("incTrade"),
+    incMundane: $("incMundane"),
+    incWeapons: $("incWeapons"),
+    incArmor: $("incArmor"),
+    incConsumables: $("incConsumables"),
+    incMagic: $("incMagic"),
+    incWondrous: $("incWondrous"),
+    incRings: $("incRings"),
+    incWands: $("incWands"),
+    incRods: $("incRods"),
+    incStaves: $("incStaves"),
+
+    scrollLevel: $("scrollLevel"),
+    potionTier: $("potionTier"),
+
+    funnyRate: $("funnyRate"),
+    comedy: $("comedy"),
+    funnyTheme: $("funnyTheme"),
+    funnyPower: $("funnyPower"),
+
+    itemPack: $("itemPack"),
+    packStatus: $("packStatus"),
+
+    shopType: $("shopType"),
+    shopWealth: $("shopWealth"),
+    shopSize: $("shopSize"),
+    haggle: $("haggle"),
+
+    // output containers
+    lootResults: $("lootResults"),
+    shopResults: $("shopResults"),
+    funnyResults: $("funnyResults"),
+
+    // buttons
+    btnGenerateLoot: $("btnGenerateLoot"),
+    btnGenerateShop: $("btnGenerateShop"),
+    btnGenerateFunny: $("btnGenerateFunny"),
+    btnRerollOne: $("btnRerollOne"),
+    btnClearLoot: $("btnClearLoot"),
+    btnClearShop: $("btnClearShop"),
+    btnClearFunny: $("btnClearFunny"),
+    btnClearAll: $("btnClearAll"),
+    btnCopy: $("btnCopy"),
+    btnExport: $("btnExport"),
+  };
+
+  // Runtime merged pools
+  let CUSTOM_PACK = null;
+  let POOLS = buildPools();
+
+  function buildPools(){
+    const pools = {
+      mundane:[...MUNDANE],
+      weapons:[...WEAPONS],
+      armor:[...ARMOR],
+      trade:[...TRADE_GOODS],
+      gems:[...GEMS],
+      consumables:[...CONSUMABLES],
+      magic:[...MAGIC],
+      funny:[...FUNNY_BASE]
+    };
+
+    if(CUSTOM_PACK){
+      const items = Array.isArray(CUSTOM_PACK.items) ? CUSTOM_PACK.items : [];
+      for(const it of items){
+        const safe = normalizeItem(it);
+        if(!safe) continue;
+        const k = (safe.kind||"magic").toLowerCase();
+        if(k==="mundane") pools.mundane.push(safe);
+        else if(k==="weapon") pools.weapons.push(safe);
+        else if(k==="armor") pools.armor.push(safe);
+        else if(k==="consumable") pools.consumables.push(safe);
+        else pools.magic.push(safe);
+      }
+    }
+    return pools;
+  }
+
+  function normalizeItem(it){
+    if(!it || !it.name) return null;
+    const rarity = (it.rarity||"common").toLowerCase().replace("very rare","veryrare").replace("very_rare","veryrare");
+    const okR = ["common","uncommon","rare","veryrare","legendary"].includes(rarity) ? rarity : "common";
+    const price = Array.isArray(it.price) && it.price.length===2 ? [Number(it.price[0])||0, Number(it.price[1])||0] : (RARITY_PRICE[okR]||[0,0]);
+    const tags = Array.isArray(it.tags) ? it.tags.map(String) : [];
+    return {
+      name:String(it.name),
+      rarity: okR,
+      type: it.type ? String(it.type) : "item",
+      attune: (typeof it.attune==="boolean") ? it.attune : false,
+      price,
+      tags,
+      desc: it.desc ? String(it.desc) : "",
+      kind: it.kind ? String(it.kind) : "magic"
+    };
+  }
+
+  function init(){
+    els.env.innerHTML = ENVIRONMENTS.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("");
+    els.env.value = "Dungeon";
+    els.level.addEventListener("input", ()=> els.levelOut.textContent = els.level.value);
+    els.levelOut.textContent = els.level.value;
+
+    els.itemPack.addEventListener("change", onLoadPack);
+
+    // Wire buttons
+    els.btnGenerateLoot.addEventListener("click", generateLoot);
+    els.btnGenerateShop.addEventListener("click", generateShop);
+    els.btnGenerateFunny.addEventListener("click", generateFunny);
+
+    els.btnRerollOne.addEventListener("click", rerollOneLoot);
+
+    els.btnClearLoot.addEventListener("click", clearLoot);
+    els.btnClearShop.addEventListener("click", clearShop);
+    els.btnClearFunny.addEventListener("click", clearFunny);
+    els.btnClearAll.addEventListener("click", clearAll);
+
+    els.btnCopy.addEventListener("click", copyAll);
+    els.btnExport.addEventListener("click", exportJsonAll);
+
+    // Generate loot once by default (keeps page feeling alive, but avoids mashing).
+    generateLoot();
+  }
+
+  function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+  function pick(arr){ return arr[randInt(0, arr.length-1)]; }
+  function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+  function esc(s){
+    return (s??"").toString()
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+  function cap(s){ return (s||"").toString().replaceAll("_"," ").replace(/\b\w/g, c=>c.toUpperCase()); }
+
+  const rarityOrder = ["common","uncommon","rare","veryrare","legendary"];
+
+  function parseTagsFilter(){
+    const raw = (els.tagsFilter.value||"").trim();
+    if(!raw) return [];
+    return raw.split(",").map(s=>s.trim().toLowerCase()).filter(Boolean);
+  }
+
+  function rarityFromRoll(level, quality, source, cap){
+    const L = parseInt(level,10);
+    let w = [65, 25, 8, 2, 0];
+    if(L>=5)  w = [55, 28, 13, 4, 0];
+    if(L>=9)  w = [45, 30, 17, 7, 1];
+    if(L>=13) w = [38, 28, 20, 11, 3];
+    if(L>=17) w = [30, 25, 22, 15, 8];
+
+    const q = {lean:-6, standard:0, generous:6, mythic:12}[quality] ?? 0;
+    w[0] = clamp(w[0]-q, 10, 80);
+    const add = q;
+    if(add>0){
+      w[2] += Math.floor(add*0.45);
+      w[3] += Math.floor(add*0.35);
+      w[4] += Math.floor(add*0.20);
+      w[1] += Math.max(0, add - (Math.floor(add*0.45)+Math.floor(add*0.35)+Math.floor(add*0.20)));
+    }else if(add<0){
+      w[1] = clamp(w[1]+Math.floor((-add)*0.65), 5, 40);
+      w[0] = clamp(w[0]+Math.floor((-add)*0.35), 10, 90);
+      w[2] = clamp(w[2]-Math.floor((-add)*0.6), 0, 40);
+      w[3] = clamp(w[3]-Math.floor((-add)*0.3), 0, 30);
+      w[4] = clamp(w[4]-Math.floor((-add)*0.1), 0, 20);
+    }
+
+    if(source==="boss"){ w[2]+=4; w[3]+=2; w[0]-=4; w[1]-=2; }
+    if(source==="lair"){ w[2]+=6; w[3]+=3; w[4]+=1; w[0]-=6; w[1]-=4; }
+    if(source==="treasury"){ w[2]+=3; w[3]+=3; w[4]+=1; w[0]-=5; w[1]-=2; }
+    if(source==="enemies"){ w[0]+=6; w[2]-=2; w[3]-=1; }
+    if(source==="environment"){ w[0]+=4; w[1]+=1; w[2]-=2; w[3]-=1; }
+    if(source==="cache"){ w[1]+=3; w[0]-=3; }
+
+    w = w.map(x=>Math.max(0,x));
+    const capIdx = rarityOrder.indexOf(cap);
+    w = w.map((v,i)=> i>capIdx ? 0 : v);
+    const sum = w.reduce((a,b)=>a+b,0);
+    let r = randInt(1, sum);
+    for(let i=0;i<w.length;i++){
+      r -= w[i];
+      if(r<=0) return rarityOrder[i];
+    }
+    return "common";
+  }
+
+  function themedNote(env){
+    const e = env.toLowerCase();
+    if(e.includes("swamp")||e.includes("marsh")||e.includes("wetland")) return "Smells faintly of peat and alchemical runoff.";
+    if(e.includes("desert")) return "Dust-dry, sunbaked, wrapped in old cloth.";
+    if(e.includes("cave")||e.includes("underdark")||e.includes("mine")) return "Cold to the touch, edges gritty with mineral grit.";
+    if(e.includes("gate")||e.includes("rift")) return "A subtle hum lingers, like distant thunder behind glass.";
+    if(e.includes("ashkarael")) return "Ash-stained and too quiet—like the world is holding its breath.";
+    if(e.includes("forest")||e.includes("fey")||e.includes("witchwood")) return "A whisper of sap and bright pollen clings to it.";
+    if(e.includes("ocean")||e.includes("coast")||e.includes("reef")) return "Salt-stiffened and wrapped in kelp-dry twine.";
+    return "Looks ordinary… until you stare too long.";
+  }
+
+  function rollGold(level, quality, source, partySize){
+    const L = parseInt(level,10);
+    const P = parseInt(partySize,10);
+    const multQ = {lean:0.65, standard:1.0, generous:1.25, mythic:1.7}[quality] ?? 1.0;
+    const multS = {enemies:0.75, cache:0.9, chest:1.0, environment:0.55, boss:1.35, lair:1.7, treasury:1.9}[source] ?? 1.0;
+    const multP = clamp(0.75 + (P*0.10), 0.9, 1.35);
+
+    const base = Math.round((L*L*5.5 + L*16 + randInt(8,45)) * multQ * multS * multP);
+    let gp = Math.max(0, base);
+    const pp = Math.floor(gp/250); gp -= pp*250;
+    const ep = Math.floor(gp/10);  gp -= ep*10;
+    const sp = randInt(0, 30);
+    const cp = randInt(0, 70);
+    return {pp, gp, ep, sp, cp};
+  }
+
+  function rollsForQuality(q, source, partySize){
+    const base = {lean:3, standard:5, generous:7, mythic:9}[q] ?? 5;
+    let b = base;
+    if(source==="boss") b += 2;
+    if(source==="lair") b += 4;
+    if(source==="treasury") b += 4;
+    if(source==="enemies") b -= 1;
+    if(source==="environment") b -= 1;
+    if(source==="cache") b += 1;
+
+    const P = parseInt(partySize,10);
+    const pAdj = Math.round((P-3) * 0.8);
+    return clamp(b + pAdj, 2, 16);
+  }
+
+  function applyFilters(items, opts){
+    const att = opts.attuneFilter;
+    const tagsNeed = parseTagsFilter();
+
+    return items.filter(it=>{
+      if(att==="yes" && it.attune!==true) return false;
+      if(att==="no" && it.attune===true) return false;
+
+      if(tagsNeed.length){
+        const tags = (it.tags||[]).map(t=>t.toLowerCase());
+        const name = (it.name||"").toLowerCase();
+        const desc = (it.desc||"").toLowerCase();
+        for(const t of tagsNeed){
+          if(!(tags.includes(t) || name.includes(t) || desc.includes(t))) return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  function scrollFromLevel(lvl){
+    const L = clamp(lvl, 0, 7);
+    const p = SCROLL_PRICE[L] || [20,60];
+    return {
+      kind:"Consumable",
+      name:`Spell Scroll (Level ${L})`,
+      rarity: (L<=1 ? "uncommon" : (L<=3 ? "rare" : "veryrare")),
+      price:p,
+      tags:["scroll", "spell"],
+      desc:`A one-time casting of a level ${L} spell (spell chosen by DM/player).`
+    };
+  }
+
+  function potionTierOk(item, tier){
+    if(tier==="any") return true;
+    const capIdx = rarityOrder.indexOf(tier);
+    const i = rarityOrder.indexOf(item.rarity || "common");
+    return i <= capIdx;
+  }
+
+  function mildCurse(){
+    const curses = [
+      "Mild curse: It subtly whispers your name when you lie (audible within 5 ft).",
+      "Mild curse: After you attune, you feel compelled to keep it clean and polished.",
+      "Mild curse: Tiny Gate-motes drift around it, making stealth slightly harder in bright light.",
+      "Mild curse: It refuses to be put down on bare stone; it slides off dramatically.",
+      "Mild curse: Animals stare at it like it owes them money."
+    ];
+    return pick(curses);
+  }
+
+  function pickCategory(opts){
+    const mode = opts.lootMode;
+    let weights = {
+      treasure: 20, trade: 12, gems: 10, mundane: 12, weapons: 8, armor: 8, consumables: 12, magic: 18
+    };
+
+    if(mode==="treasure"){ weights.treasure+=12; weights.trade+=6; weights.magic-=6; }
+    if(mode==="gear"){ weights.weapons+=10; weights.armor+=10; weights.mundane+=6; weights.magic-=8; }
+    if(mode==="magic"){ weights.magic+=14; weights.consumables+=6; weights.treasure-=8; }
+    if(mode==="consumables"){ weights.consumables+=14; weights.magic+=4; weights.weapons-=6; weights.armor-=6; }
+
+    if(opts.source==="enemies"){ weights.mundane+=8; weights.treasure+=4; weights.magic-=6; }
+    if(opts.source==="environment"){ weights.mundane+=10; weights.trade+=4; weights.magic-=8; }
+    if(opts.source==="boss"){ weights.magic+=8; weights.weapons+=4; weights.armor+=4; }
+    if(opts.source==="lair"){ weights.magic+=10; weights.treasure+=10; weights.gems+=6; }
+    if(opts.source==="treasury"){ weights.treasure+=14; weights.gems+=10; weights.magic+=6; }
+    if(opts.source==="cache"){ weights.trade+=6; weights.mundane+=4; weights.magic+=2; }
+
+    const allow = {
+      treasure: opts.incCoins,
+      gems: opts.incGems,
+      trade: opts.incTrade,
+      mundane: opts.incMundane,
+      weapons: opts.incWeapons,
+      armor: opts.incArmor,
+      consumables: opts.incConsumables,
+      magic: opts.incMagic
+    };
+
+    const keys = Object.keys(weights).filter(k=>allow[k] && weights[k]>0);
+    if(!keys.length) return "magic";
+    const sum = keys.reduce((a,k)=>a+weights[k],0);
+    let r = randInt(1, sum);
+    for(const k of keys){
+      r -= weights[k];
+      if(r<=0) return k;
+    }
+    return keys[0];
+  }
+
+  function makeLootRoll(opts){
+    const rarity = rarityFromRoll(opts.level, opts.quality, opts.source, opts.rarityCap);
+    const cat = pickCategory(opts);
+
+    if(cat==="treasure"){
+      const c = rollGold(opts.level, opts.quality, opts.source, opts.partySize);
+      const parts = [];
+      if(c.pp) parts.push(`${c.pp} pp`);
+      if(c.gp) parts.push(`${c.gp} gp`);
+      if(c.ep) parts.push(`${c.ep} ep`);
+      if(c.sp) parts.push(`${c.sp} sp`);
+      if(c.cp) parts.push(`${c.cp} cp`);
+      return {
+        kind:"Coins",
+        name: parts.join(", "),
+        rarity:"common",
+        price:[0,0],
+        tags:["coins", opts.source, opts.env],
+        desc: themedNote(opts.env)
+      };
+    }
+
+    if(cat==="gems"){
+      const count = randInt(1, Math.max(1, Math.floor(parseInt(opts.partySize,10)/2)));
+      const list = [];
+      let total=0;
+      for(let i=0;i<count;i++){
+        const g = pick(POOLS.gems);
+        const val = randInt(g.gp[0], g.gp[1]);
+        total += val;
+        list.push(`${g.name} (~${val} gp)`);
+      }
+      return {
+        kind:"Gems",
+        name: `${count} gem${count>1?"s":""}: ` + list.join(", "),
+        rarity:"common",
+        price:[total,total],
+        tags:["gems", opts.source, opts.env],
+        desc:"Small valuables suitable for trade. " + themedNote(opts.env)
+      };
+    }
+
+    if(cat==="trade"){
+      const t = pick(POOLS.trade);
+      const qty = randInt(1, 3);
+      const lo = Math.round(t.base*0.8*qty);
+      const hi = Math.round(t.base*1.6*qty);
+      return {
+        kind:"Trade Goods",
+        name: `${qty}× ${t.name}`,
+        rarity:"common",
+        price:[lo,hi],
+        tags:["trade", ...(t.tags||[]), opts.source, opts.env],
+        desc:"Barter, crafting, or resale. " + themedNote(opts.env)
+      };
+    }
+
+    if(cat==="mundane"){
+      const m = pick(POOLS.mundane);
+      return {
+        kind:"Mundane",
+        name:m.name,
+        rarity:"common",
+        price:[2,35],
+        tags:["mundane", m.type, ...(m.tags||[]), opts.source, opts.env],
+        desc:"Useful gear. " + themedNote(opts.env)
+      };
+    }
+
+    if(cat==="weapons"){
+      const w = pick(POOLS.weapons);
+      return {
+        kind:"Weapon",
+        name:w.name,
+        rarity:"common",
+        price:w.price || [5,35],
+        tags:["weapon", ...(w.tags||[]), opts.source, opts.env],
+        desc:"A serviceable weapon. " + themedNote(opts.env)
+      };
+    }
+
+    if(cat==="armor"){
+      const a = pick(POOLS.armor);
+      return {
+        kind:"Armor",
+        name:a.name,
+        rarity:"common",
+        price:a.price || [8,60],
+        tags:["armor", ...(a.tags||[]), opts.source, opts.env],
+        desc:"Reliable protection. " + themedNote(opts.env)
+      };
+    }
+
+    if(cat==="consumables"){
+      const [minS,maxS] = (opts.scrollLevel||"0-0").split("-").map(x=>parseInt(x,10));
+      const canScroll = maxS>0;
+      if(canScroll && Math.random()<0.35){
+        const lvl = randInt(minS, maxS);
+        const sc = scrollFromLevel(lvl);
+        sc.desc += " " + themedNote(opts.env);
+        return sc;
+      }
+
+      const tier = opts.potionTier;
+      const bucket = POOLS.consumables
+        .filter(x=>rarityOrder.indexOf(x.rarity||"common") <= rarityOrder.indexOf(rarity))
+        .filter(x=>potionTierOk(x,tier));
+
+      const item = pick(bucket.length?bucket:POOLS.consumables);
+      return {
+        kind:"Consumable",
+        name:item.name,
+        rarity:item.rarity || "common",
+        price:item.price || RARITY_PRICE[item.rarity||"common"] || [10,40],
+        tags:["consumable", ...(item.tags||[]), opts.source, opts.env],
+        desc:(item.desc||"One-time use item.") + " " + themedNote(opts.env)
+      };
+    }
+
+    // magic
+    let bucket = POOLS.magic.filter(x=>x.rarity===rarity);
+    const allowTypes = new Set();
+    if(opts.incWondrous) allowTypes.add("wondrous");
+    if(opts.incRings) allowTypes.add("ring");
+    if(opts.incWands) allowTypes.add("wand");
+    if(opts.incRods) allowTypes.add("rod");
+    if(opts.incStaves) allowTypes.add("staff");
+    if(opts.incWeapons) allowTypes.add("weapon");
+    if(opts.incArmor) allowTypes.add("armor");
+
+    bucket = bucket.filter(x=>allowTypes.has((x.type||"item").toLowerCase()));
+    bucket = applyFilters(bucket, opts);
+    if(!bucket.length){
+      const capIdx = rarityOrder.indexOf(opts.rarityCap);
+      bucket = POOLS.magic.filter(x=>rarityOrder.indexOf(x.rarity)<=capIdx);
+      bucket = bucket.filter(x=>allowTypes.has((x.type||"item").toLowerCase()));
+      bucket = applyFilters(bucket, opts);
+    }
+    const item = pick(bucket.length?bucket:POOLS.magic);
+
+    let extra = "";
+    const curseChance = parseInt(opts.cursedChance,10) || 0;
+    if(curseChance>0 && Math.random()*100 < curseChance){
+      extra = " " + mildCurse();
+    }
+
+    return {
+      kind:"Magic Item",
+      name:item.name,
+      rarity:item.rarity,
+      price:item.price || RARITY_PRICE[item.rarity] || [75,250],
+      tags:["magic", item.type||"item", ...(item.tags||[]), opts.source, opts.env],
+      attune: !!item.attune,
+      desc:(item.desc||"") + " " + themedNote(opts.env) + extra
+    };
+  }
+
+  function makeFunny(opts){
+    const theme = opts.funnyTheme;
+    const power = opts.funnyPower;
+    const comedy = parseInt(opts.comedy,10);
+
+    const candidates = POOLS.funny.filter(f=>{
+      const t = f.theme || ["any"];
+      const themeOk = theme==="any" || t.includes(theme) || t.includes("any");
+      const powerOk = (power===f.power) || (power==="moderate" && f.power==="minor") || (power==="rare");
+      return themeOk && powerOk;
+    });
+    const f = pick(candidates.length?candidates:POOLS.funny);
+
+    let twist = "";
+    if(comedy>=3 && Math.random()<0.6){
+      twist = " " + pick([
+        "It absolutely refuses to function unless someone says “please.”",
+        "It leaves tiny, suspicious footprints that point in the wrong direction.",
+        "Whenever it activates, a distant goose honks approval.",
+        "It works best when you pretend it was your idea all along.",
+        "It smells faintly of cinnamon for no reason."
+      ]);
+    }
+    if(comedy>=4 && Math.random()<0.6){
+      twist += " " + pick([
+        "Also, it has a tiny hat.",
+        "Also, it insists it’s 'not cursed' unprompted.",
+        "Also, it narrates your choices in a dramatic whisper (only you can hear it).",
+        "Also, it occasionally sighs like a disappointed librarian."
+      ]);
+    }
+
+    const price = power==="minor" ? [10,60] : (power==="moderate" ? [75,250] : [250,900]);
+    const rarity = power==="rare" ? "rare" : (power==="moderate" ? "uncommon" : "common");
+
+    return {
+      kind:"Funny Magic",
+      name:f.name,
+      rarity,
+      price,
+      tags:["funny", ...(f.tags||[]), theme, power],
+      desc:(f.desc||"") + twist
+    };
+  }
+
+  function shopInventory(opts){
+    const type = opts.shopType;
+    if(type==="none") return null;
+
+    const wealth = opts.shopWealth;
+    const size = opts.shopSize;
+
+    const sizeLines = {tiny:8, small:12, medium:18, large:26}[size] ?? 12;
+
+    // Slightly tighter, more believable markups
+    const wealthMarkup = {wretched:0.85, squalid:0.9, poor:0.95, modest:1.0, comfortable:1.06, wealthy:1.12, aristocratic:1.18};
+    const markup = wealthMarkup[wealth] ?? 1.0;
+
+    const haggle = opts.haggle;
+    const haggleRange = {off:0, light:0.10, normal:0.20, hard:0.30}[haggle] ?? 0;
+
+    const catalog = {
+      general:{mundane:0.45, trade:0.25, consumable:0.20, magic:0.10},
+      wandering:{mundane:0.30, trade:0.35, consumable:0.20, magic:0.15},
+      blacksmith:{mundane:0.25, trade:0.10, consumable:0.05, magic:0.60},
+      armorer:{mundane:0.25, trade:0.05, consumable:0.05, magic:0.65},
+      woodworker:{mundane:0.45, trade:0.25, consumable:0.05, magic:0.25},
+      healer:{mundane:0.10, trade:0.10, consumable:0.70, magic:0.10},
+      arcanist:{mundane:0.10, trade:0.10, consumable:0.30, magic:0.50},
+      magic_armorer:{mundane:0.10, trade:0.05, consumable:0.10, magic:0.75},
+      legendary_forge:{mundane:0.05, trade:0.05, consumable:0.05, magic:0.85}
+    }[type] || {mundane:0.4, trade:0.25, consumable:0.2, magic:0.15};
+
+    const cap = {
+      general:"uncommon", wandering:"rare", woodworker:"uncommon", healer:"rare",
+      blacksmith:"rare", armorer:"rare", arcanist:"veryrare", magic_armorer:"veryrare", legendary_forge:"legendary"
+    }[type] || "rare";
+    const capIdx = rarityOrder.indexOf(cap);
+
+    function pickRarity(){
+      const L = parseInt(opts.level,10);
+      let w = [70, 22, 7, 1, 0];
+      if(L>=7) w=[58, 26, 12, 4, 0];
+      if(L>=12) w=[48, 26, 16, 8, 2];
+      if(L>=17) w=[38, 24, 18, 12, 8];
+
+      if(wealth==="wealthy"||wealth==="aristocratic"){ w[2]+=3; w[3]+=2; w[0]-=4; }
+      if(wealth==="poor"||wealth==="squalid"||wealth==="wretched"){ w[0]+=6; w[2]-=2; w[3]-=1; }
+
+      w = w.map((v,i)=> i>capIdx ? 0 : Math.max(0,v));
+      const sum=w.reduce((a,b)=>a+b,0);
+      let r = randInt(1,sum);
+      for(let i=0;i<w.length;i++){ r-=w[i]; if(r<=0) return rarityOrder[i]; }
+      return "common";
+    }
+
+    function priced(range){
+      const lo=Math.round(range[0]*markup);
+      const hi=Math.round(range[1]*markup);
+      const val = randInt(Math.max(1, lo), Math.max(1, hi));
+      const lowH = haggleRange ? Math.round(val*(1-haggleRange)) : null;
+      const highH= haggleRange ? Math.round(val*(1+haggleRange)) : null;
+      return {gp: val, haggle: haggleRange? [lowH, highH] : null};
+    }
+
+    const lines=[];
+    for(let i=0;i<sizeLines;i++){
+      const r = Math.random();
+      let kind="mundane";
+      if(r<catalog.mundane) kind="mundane";
+      else if(r<catalog.mundane+catalog.trade) kind="trade";
+      else if(r<catalog.mundane+catalog.trade+catalog.consumable) kind="consumable";
+      else kind="magic";
+
+      if(kind==="trade"){
+        const t=pick(POOLS.trade);
+        const p=priced([t.base*0.8, t.base*1.6]);
+        lines.push({kind:"Trade Good", name:t.name, rarity:"common", price:p, desc:"Useful for barter, crafting, or resale."});
+        continue;
+      }
+      if(kind==="consumable"){
+        const rar = pickRarity();
+        const bucket = POOLS.consumables.filter(x=>rarityOrder.indexOf(x.rarity)<=rarityOrder.indexOf(rar));
+        const c = pick(bucket.length?bucket:POOLS.consumables);
+        const p = priced(c.price || [10,40]);
+        lines.push({kind:"Consumable", name:c.name, rarity:c.rarity, price:p, desc:c.desc});
+        continue;
+      }
+      if(kind==="magic"){
+        const rar = pickRarity();
+        let bucket = POOLS.magic.filter(x=>x.rarity===rar);
+        bucket = applyFilters(bucket, opts);
+        const m = pick(bucket.length?bucket:POOLS.magic);
+        const pr = m.price || RARITY_PRICE[m.rarity] || [75,250];
+        const p = priced(pr);
+        lines.push({kind:"Magic", name:m.name, rarity:m.rarity, price:p, desc:m.desc});
+        continue;
+      }
+
+      if(type==="blacksmith"||type==="armorer"||type==="magic_armorer"||type==="legendary_forge"){
+        if(Math.random()<0.55){
+          const w = pick(POOLS.weapons);
+          const p = priced(w.price || [5,35]);
+          lines.push({kind:"Weapon", name:w.name, rarity:"common", price:p, desc:"Workshop-made weapon."});
+          continue;
+        } else if(Math.random()<0.65){
+          const a = pick(POOLS.armor);
+          const p = priced(a.price || [8,60]);
+          lines.push({kind:"Armor", name:a.name, rarity:"common", price:p, desc:"Standard armor fitted to size."});
+          continue;
+        }
+      }
+
+      const m = pick(POOLS.mundane);
+      const p = priced([2,35]);
+      lines.push({kind:"Mundane", name:m.name, rarity:"common", price:p, desc:"Standard gear and supplies."});
+    }
+
+    return {
+      title: ({
+        general:"General Store", wandering:"Wandering Trader", blacksmith:"Blacksmith", armorer:"Armorer",
+        woodworker:"Woodworker / Fletcher", healer:"Healer / Apothecary", arcanist:"Arcanist Curios",
+        magic_armorer:"Magic Armorer", legendary_forge:"Legendary Forge"
+      }[type] || "Shop"),
+      wealth, size, markup, haggleRange, lines
+    };
+  }
+
+  function rarityLabel(r){
+    return ({common:"Common", uncommon:"Uncommon", rare:"Rare", veryrare:"Very Rare", legendary:"Legendary"}[r] || "Common");
+  }
+  function rClass(r){ return (r==="veryrare") ? "veryrare" : r; }
+
+  function cardHeader(title, subtitle, rarity){
+    return `
+      <div class="card">
+        <div class="rbar ${rClass(rarity)}"></div>
+        <div class="cardHead">
+          <div class="cardTitle">
+            <strong>${esc(title)}</strong>
+            <span>${esc(subtitle)}</span>
+          </div>
+          <span class="badge">${esc(rarityLabel(rarity))}</span>
+        </div>
+      </div>`;
+  }
+
+  function lootCard(it){
+    const price = (it.price && (it.price[0]||it.price[1])) ? `${it.price[0]}–${it.price[1]} gp` : "—";
+    const att = (it.attune===true) ? " • Attunement" : "";
+    return `
+      <div class="card">
+        <div class="rbar ${rClass(it.rarity||"common")}"></div>
+        <div class="cardHead">
+          <div class="cardTitle">
+            <strong>${esc(it.name)}</strong>
+            <span>${esc(it.kind)} • ${esc(rarityLabel(it.rarity||"common"))}${att}</span>
+          </div>
+          <span class="badge">Value: ${esc(price)}</span>
+        </div>
+        <div class="cardBody">
+          <div class="desc">${esc(it.desc||"")}</div>
+          <div class="line">
+            <span class="kv">Tags:</span>
+            <span class="kv">${esc((it.tags||[]).join(", "))}</span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function shopLineCard(l){
+    const r = rClass(l.rarity||"common");
+    const price = l.price?.gp != null ? `${l.price.gp} gp` : "";
+    const hag = l.price?.haggle ? ` (haggle ${l.price.haggle[0]}–${l.price.haggle[1]})` : "";
+    return `
+      <div class="card">
+        <div class="rbar ${r}"></div>
+        <div class="cardHead">
+          <div class="cardTitle">
+            <strong>${esc(l.name)}</strong>
+            <span>${esc(l.kind)} • ${esc(rarityLabel(l.rarity||"common"))}</span>
+          </div>
+          <span class="badge">${esc(price + hag)}</span>
+        </div>
+        <div class="cardBody">
+          <div class="desc">${esc(l.desc||"")}</div>
+        </div>
+      </div>`;
+  }
+
+  function gatherOpts(){
+    return {
+      level: els.level.value,
+      partySize: els.partySize.value,
+      quality: els.quality.value,
+      lootMode: els.lootMode.value,
+      source: els.source.value,
+      env: els.env.value,
+      rarityCap: els.rarityCap.value,
+      cursedChance: els.cursedChance.value,
+      attuneFilter: els.attuneFilter.value,
+      tagsFilter: els.tagsFilter.value,
+
+      incCoins: els.incCoins.checked,
+      incGems: els.incGems.checked,
+      incTrade: els.incTrade.checked,
+      incMundane: els.incMundane.checked,
+      incWeapons: els.incWeapons.checked,
+      incArmor: els.incArmor.checked,
+      incConsumables: els.incConsumables.checked,
+      incMagic: els.incMagic.checked,
+
+      incWondrous: els.incWondrous.checked,
+      incRings: els.incRings.checked,
+      incWands: els.incWands.checked,
+      incRods: els.incRods.checked,
+      incStaves: els.incStaves.checked,
+
+      scrollLevel: els.scrollLevel.value,
+      potionTier: els.potionTier.value,
+
+      funnyRate: parseInt(els.funnyRate.value,10),
+      comedy: els.comedy.value,
+      funnyTheme: els.funnyTheme.value,
+      funnyPower: els.funnyPower.value,
+
+      shopType: els.shopType.value,
+      shopWealth: els.shopWealth.value,
+      shopSize: els.shopSize.value,
+      haggle: els.haggle.value
+    };
+  }
+
+  // ---- Separate generators (prevents "mashing together") ----
+  function generateLoot(){
+    const opts = gatherOpts();
+    const loot = [];
+    const rolls = rollsForQuality(opts.quality, opts.source, opts.partySize);
+    for(let i=0;i<rolls;i++) loot.push(makeLootRoll(opts));
+    window.__LAST_LOOT__ = {generatedAt: new Date().toISOString(), opts, loot};
+    renderLoot(window.__LAST_LOOT__);
+  }
+
+  function generateShop(){
+    const opts = gatherOpts();
+    const shop = shopInventory(opts);
+    window.__LAST_SHOP__ = {generatedAt: new Date().toISOString(), opts, shop};
+    renderShop(window.__LAST_SHOP__);
+  }
+
+  function generateFunny(){
+    const opts = gatherOpts();
+    const funny = makeFunny(opts);
+    window.__LAST_FUNNY__ = {generatedAt: new Date().toISOString(), opts, funny};
+    renderFunny(window.__LAST_FUNNY__);
+  }
+
+  function rerollOneLoot(){
+    const data = window.__LAST_LOOT__;
+    if(!data || !data.loot || !data.loot.length){
+      generateLoot();
+      return;
+    }
+    const opts = data.opts || gatherOpts();
+    const idx = randInt(0, data.loot.length-1);
+    data.loot[idx] = makeLootRoll(opts);
+    data.generatedAt = new Date().toISOString();
+    window.__LAST_LOOT__ = data;
+    renderLoot(data);
+  }
+
+  function clearLoot(){ els.lootResults.innerHTML = ""; window.__LAST_LOOT__ = null; }
+  function clearShop(){ els.shopResults.innerHTML = ""; window.__LAST_SHOP__ = null; }
+  function clearFunny(){ els.funnyResults.innerHTML = ""; window.__LAST_FUNNY__ = null; }
+  function clearAll(){ clearLoot(); clearShop(); clearFunny(); }
+
+  function renderLoot(data){
+    if(!data){ els.lootResults.innerHTML = ""; return; }
+    const o = data.opts;
+    const blocks = [];
+    blocks.push(cardHeader(`Loot — Level ${o.level} • Party ${o.partySize} • ${o.quality.toUpperCase()}`,
+      `${cap(o.source)} in ${o.env} • Mode: ${cap(o.lootMode)} • Max: ${rarityLabel(o.rarityCap)}`,
+      (o.source==="treasury"||o.source==="lair") ? "rare" : (o.source==="boss" ? "uncommon" : "common")
+    ));
+    blocks.push(...data.loot.map(it=>lootCard(it)));
+    els.lootResults.innerHTML = blocks.join("");
+  }
+
+  function renderShop(data){
+    if(!data || !data.shop){
+      els.shopResults.innerHTML = `<div class="hint">Shop Mode is Off, or no shop was generated.</div>`;
+      return;
+    }
+    const s = data.shop;
+    const blocks = [];
+    blocks.push(cardHeader(`${s.title} Inventory`, `${cap(s.wealth)} • ${cap(s.size)} • markup x${s.markup.toFixed(2)}`, "rare"));
+    blocks.push(...s.lines.map(l=>shopLineCard(l)));
+    els.shopResults.innerHTML = blocks.join("");
+  }
+
+  function renderFunny(data){
+    if(!data || !data.funny){ els.funnyResults.innerHTML = ""; return; }
+    const f = data.funny;
+    const blocks = [];
+    blocks.push(cardHeader("Funny Item", "One-off roll (separate from loot + shop)", f.rarity || "common"));
+    blocks.push(lootCard(f));
+    els.funnyResults.innerHTML = blocks.join("");
+  }
+
+  function snapshotAll(){
+    return {
+      generatedAt: new Date().toISOString(),
+      loot: window.__LAST_LOOT__ || null,
+      shop: window.__LAST_SHOP__ || null,
+      funny: window.__LAST_FUNNY__ || null
+    };
+  }
+
+  async function copyAll(){
+    const snap = snapshotAll();
+    const text = formatForCopy(snap);
+    await navigator.clipboard.writeText(text);
+  }
+
+  function formatForCopy(snap){
+    const lines = [];
+    lines.push(`AETHYRA GENERATOR SNAPSHOT — ${snap.generatedAt}`);
+    lines.push("");
+
+    if(snap.shop && snap.shop.shop){
+      const s = snap.shop.shop;
+      lines.push(`[SHOP] ${s.title} (${s.wealth}, ${s.size})`);
+      for(const l of s.lines){
+        const hag = l.price?.haggle ? ` (haggle ${l.price.haggle[0]}–${l.price.haggle[1]} gp)` : "";
+        lines.push(`- ${l.name} — ${l.kind} — ${rarityLabel(l.rarity)} — ${l.price.gp} gp${hag}`);
+      }
+      lines.push("");
+    }
+
+    if(snap.funny && snap.funny.funny){
+      const f = snap.funny.funny;
+      const v = (f.price && (f.price[0]||f.price[1])) ? `${f.price[0]}–${f.price[1]} gp` : "—";
+      lines.push(`[FUNNY] ${f.name} (${rarityLabel(f.rarity)}) — Value ${v}`);
+      if(f.desc) lines.push(`  ${f.desc}`);
+      lines.push("");
+    }
+
+    if(snap.loot && snap.loot.loot){
+      const o = snap.loot.opts;
+      lines.push(`[LOOT] L${o.level} • Party ${o.partySize} • ${o.quality.toUpperCase()} • ${o.source.toUpperCase()} • ${o.env}`);
+      for(const it of snap.loot.loot){
+        const value = (it.price && (it.price[0]||it.price[1])) ? `${it.price[0]}–${it.price[1]} gp` : "—";
+        lines.push(`- ${it.name} (${it.kind}, ${rarityLabel(it.rarity||"common")}) — Value ${value}`);
+        if(it.desc) lines.push(`  ${it.desc}`);
+      }
+    } else {
+      lines.push("[LOOT] None generated yet.");
+    }
+
+    return lines.join("\n");
+  }
+
+  function exportJsonAll(){
+    const snap = snapshotAll();
+    const payload = JSON.stringify(snap, null, 2);
+    const blob = new Blob([payload], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "aethyra-generator.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function onLoadPack(){
+    const file = els.itemPack.files && els.itemPack.files[0];
+    if(!file){
+      els.packStatus.value = "No pack loaded";
+      CUSTOM_PACK = null;
+      POOLS = buildPools();
+      return;
+    }
+    try{
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      CUSTOM_PACK = parsed;
+      POOLS = buildPools();
+      const count = Array.isArray(parsed.items) ? parsed.items.length : 0;
+      els.packStatus.value = `Loaded pack: ${count} items`;
+      // keep existing outputs, but future rolls will include new items
+    }catch(e){
+      els.packStatus.value = "Failed to load pack (invalid JSON)";
+      console.error(e);
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
